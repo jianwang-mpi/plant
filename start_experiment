@@ -1,6 +1,4 @@
 #!/bin/sh
 python3 leaf_identifier.py -m resnet
 python3 leaf_identifier.py -m densenet
-python3 leaf_identifier.py -m inception
 python3 leaf_identifier.py -m squeeze
-python3 leaf_identifier.py -m vgg19bn

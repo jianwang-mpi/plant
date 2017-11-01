@@ -1,23 +1,22 @@
 from __future__ import print_function, division
 
+import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim import lr_scheduler
-from torch.autograd import Variable
-import numpy as np
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
-import time
-import os
 from tensorboard import SummaryWriter
+from torch.autograd import Variable
+from torch.optim import lr_scheduler
+from torchvision import models
+from optparse import OptionParser
 from data_loader import use_gpu, dataloders, dataset_sizes
 
 writer = SummaryWriter(log_dir='run')
 
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25, save_file = 'result.txt'):
+def train_model(model, criterion, optimizer, scheduler, num_epochs=25, save_file='result.txt'):
     since = time.time()
 
     best_model_wts = model.state_dict()
@@ -108,37 +107,31 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25, save_file
     # write result to file
     with open(save_file, mode='w') as result_file:
         result_file.write('Training complete in {:.0f}m {:.0f}s\n'.format(
-        time_elapsed // 60, time_elapsed % 60))
+            time_elapsed // 60, time_elapsed % 60))
         result_file.write('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
 
-from optparse import OptionParser
+
 parser = OptionParser()
 parser.add_option(
-    '-m','--model',
-    action = 'store',
-    dest = 'model_type',
-    type = 'string',
-    default = 'resnet'
+    '-m', '--model',
+    action='store',
+    dest='model_type',
+    type='string',
+    default='resnet'
 
 )
 options, args = parser.parse_args()
 model_type = options.model_type
 if model_type == 'resnet':
-    model_ft = models.resnet18(pretrained=True)
+    model_ft = models.resnet34(pretrained=True, num_classes=184)
 elif model_type == 'densenet':
-    model_ft = models.densenet121(pretrained=True)
-elif model_type == 'inception':
-    model_ft = models.inception_v3(pretrained=True)
-elif model_type == 'squeeze':
-    model_ft = models.squeezenet1_0(pretrained=True)
+    model_ft = models.densenet121(pretrained=True, num_classes=184)
 else:
-    model_ft = models.vgg19_bn(pretrained=True)
-num_ftrs = model_ft.fc.in_features
-model_ft.fc = nn.Linear(num_ftrs, 184)
+    model_ft = models.squeezenet1_0(pretrained=True, num_classes=184)
 
 if use_gpu:
     model_ft = model_ft.cuda()
@@ -152,4 +145,4 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=25, save_file= os.path.join("result_folder", model_type))
+                       num_epochs=25, save_file=os.path.join("result_folder", model_type))
