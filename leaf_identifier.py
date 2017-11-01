@@ -11,8 +11,13 @@ from torchvision import datasets, models, transforms
 import matplotlib.pyplot as plt
 import time
 import os
-from data_loader import use_gpu,dataloders,dataset_sizes
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+from tensorboard import SummaryWriter
+from data_loader import use_gpu, dataloders, dataset_sizes
+
+writer = SummaryWriter(log_dir='run')
+
+
+def train_model(model, criterion, optimizer, scheduler, num_epochs=25, save_file = 'result.txt'):
     since = time.time()
 
     best_model_wts = model.state_dict()
@@ -21,6 +26,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
+
+        train_step = 0
+        test_step = 0
 
         # Each epoch has a training and validation phase
         for phase in ['train', 'test']:
@@ -31,6 +39,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 model.train(False)  # Set model to evaluate mode
 
             running_loss = 0.0
+            steps = 0
             running_corrects = 0
 
             iter_times = 0
@@ -57,20 +66,33 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 # backward + optimize only if in training phase
                 if phase == 'train':
                     iter_times += 1
-                    if iter_times% 100 == 0:
-                        print(loss)
                     loss.backward()
                     optimizer.step()
+                    train_step += inputs.data.size()[0]
+                else:
+                    test_step += inputs.data.size()[0]
 
                 # statistics
                 running_loss += loss.data[0]
+                steps += 1
                 running_corrects += torch.sum(preds == labels.data)
+                # logging
+                if phase == 'train' and train_step % 50 == 0:
+                    writer.add_scalar(tag='train_loss', scalar_value=running_loss / steps,
+                                      global_step=dataset_sizes[phase] * epoch + train_step)
+                    running_loss = 0
+                    steps = 0
+                elif test_step % 50 == 0:
+                    writer.add_scalar(tag='test_loss', scalar_value=loss.data[0],
+                                      global_step=dataset_sizes[phase] * epoch + test_step)
+                    running_loss = 0
+                    steps = 0
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects / dataset_sizes[phase]
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
+            print('{} Acc: {:.4f}'.format(
+                phase, epoch_acc))
 
             # deep copy the model
             if phase == 'test' and epoch_acc > best_acc:
@@ -83,12 +105,38 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
+    # write result to file
+    with open(save_file, mode='w') as result_file:
+        result_file.write('Training complete in {:.0f}m {:.0f}s\n'.format(
+        time_elapsed // 60, time_elapsed % 60))
+        result_file.write('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
 
-model_ft = models.resnet18(pretrained=True)
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option(
+    '-m','--model',
+    action = 'store',
+    dest = 'model_type',
+    type = 'string',
+    default = 'resnet'
+
+)
+options, args = parser.parse_args()
+model_type = options.model_type
+if model_type == 'resnet':
+    model_ft = models.resnet18(pretrained=True)
+elif model_type == 'densenet':
+    model_ft = models.densenet121(pretrained=True)
+elif model_type == 'inception':
+    model_ft = models.inception_v3(pretrained=True)
+elif model_type == 'squeeze':
+    model_ft = models.squeezenet1_0(pretrained=True)
+else:
+    model_ft = models.vgg19_bn(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 184)
 
@@ -104,4 +152,4 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=25)
+                       num_epochs=25, save_file= os.path.join("result_folder", model_type))
