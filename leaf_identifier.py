@@ -6,7 +6,7 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from tensorboard import SummaryWriter
+from tensorboardX import SummaryWriter
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import models
@@ -152,3 +152,5 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
                        num_epochs=25, save_file=os.path.join("result_folder", model_type))
+
+torch.save(model_ft, model_type + '.pkl')
