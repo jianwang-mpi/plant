@@ -1,0 +1,62 @@
+\documentclass[12pt]{amsart}
+\usepackage[backend=biber,  
+firstinits=true,
+backref=true, 
+style=alphabetic, 
+natbib=true, 
+url=false, 
+doi=false, 
+eprint=true]{biblatex}
+\usepackage[ocgcolorlinks]{hyperref}
+\hypersetup{
+	pdfstartview=FitH,
+	bookmarksopen=false,
+	pdfencoding=auto,
+	colorlinks=true,
+	linkcolor=blue,
+	pdfinfo={
+	Title={your title},
+	Subject={},
+	Author={Your name},
+	Keywords={your keywords}%
+	}
+}
+\usepackage{filecontents}
+
+\begin{filecontents}{\jobname.bib}
+@article{vgg,
+	author = {Karen Simonyan and Andrew Zisserman},
+	year = {2014},
+	title = {Very Deep Convolutional Networks for Large-Scale Image Recognition},
+	journal={ICLR}
+}
+@article{resnet,
+	author = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},
+	year = {2015},
+	title = {Deep Residual Learning for Image Recognition},
+	journal={CVPR}
+}
+@article{densenet,
+	author = {Gao Huang and Zhuang Liu and Kilian Q. Weinberger and Laurens van der Maaten},
+	year = {2015},
+	title = {Densely Connected Convolutional Networks},
+	journal={CVPR}
+}
+@article{imagenet,
+	author = {J. Deng and W. Dong and R. Socher and L.-J. Li and K. Li and L. FeiFei.},
+	year = {2009},
+	title = {Imagenet: A large-scale hierarchical image database},
+	journal={CVPR}
+}
+@article{leafsnap,
+	author = {Neeraj Kumar and Peter N. Belhumeur and Arijit Biswas and David W. Jacobs and W. John Kress and Ida C. Lopez and João V. B. Soares},
+	year = {2012},
+	title = {Leafsnap: A Computer Vision System for Automatic Plant Species Identification},
+	journal={ECCV}
+}
+\end{filecontents}
+\addbibresource{\jobname.bib}
+\begin{document}
+\renewcommand{\bibname}{Whatever floats your boat}
+\printbibliography
+\end{document}

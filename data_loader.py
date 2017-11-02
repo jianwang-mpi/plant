@@ -30,4 +30,10 @@ dataloders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'test']}
 class_names = image_datasets['train'].classes
 
+
+print(class_names[130])
+print(class_names[134])
+print(class_names[150])
+print(class_names[122])
+print(class_names[86])
 use_gpu = torch.cuda.is_available()
