@@ -13,10 +13,9 @@ from torchvision import models
 from optparse import OptionParser
 from data_loader import use_gpu, dataloders, dataset_sizes
 
-writer = SummaryWriter(log_dir='run')
-
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25, save_file='result.txt'):
+    global writer
     since = time.time()
 
     best_model_wts = model.state_dict()
@@ -126,12 +125,19 @@ parser.add_option(
 )
 options, args = parser.parse_args()
 model_type = options.model_type
+writer = SummaryWriter(log_dir=model_type)
 if model_type == 'resnet':
-    model_ft = models.resnet34(pretrained=True, num_classes=184)
+    model_ft = models.resnet50(pretrained=True)
+    fc_in_features = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(in_features=fc_in_features, out_features=184)
 elif model_type == 'densenet':
-    model_ft = models.densenet121(pretrained=True, num_classes=184)
+    model_ft = models.densenet121(pretrained=True)
+    fc_in_features = model_ft.classifier.in_features
+    model_ft.classifier = nn.Linear(in_features=fc_in_features, out_features=184)
 else:
-    model_ft = models.squeezenet1_0(pretrained=True, num_classes=184)
+    model_ft = models.inception_v3(pretrained=True)
+    fc_in_features = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(in_features=fc_in_features, out_features=184)
 
 if use_gpu:
     model_ft = model_ft.cuda()
